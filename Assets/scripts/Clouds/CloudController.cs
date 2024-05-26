@@ -14,14 +14,15 @@ public class CloudController : MonoBehaviour
     public float densityThreshold = 1.0f;
     public Vector3 offset = new Vector3(0,0,0);
     public RenderTexture simp;
+    public RenderTexture worley;
 
     public Material material;
 
     void Awake(){
         var weathermap = FindObjectOfType<SimplexNoiseRenderer>();
-        if (Application.isPlaying) {
-            weathermap.UpdateSimplex();
-        }
+        /*if (Application.isPlaying) {
+            weathermap.GenerateSimplexNoise();
+        }*/
     }
 
     private void OnRenderImage(RenderTexture src,RenderTexture dest){
@@ -36,11 +37,15 @@ public class CloudController : MonoBehaviour
         material.SetFloat("_DensityMultiplier", densityMultiplier);
         material.SetInt("_NumSteps", numSteps);
         var weathermap = FindObjectOfType<SimplexNoiseRenderer>();
+        weathermap.GenerateSimplexNoise();
 
         material.SetTexture("_SimplexNoise", weathermap.simplexRenderTexture);
         simp = weathermap.simplexRenderTexture;
         var noise = FindObjectOfType<WorleyNoiseRenderer>();
+        noise.GenerateWorleyNoise();
         material.SetTexture("_WorleyFBM", noise.worleyRenderTexture);
+
+        worley = noise.worleyRenderTexture;
         Graphics.Blit(src,dest,material);
     }
 

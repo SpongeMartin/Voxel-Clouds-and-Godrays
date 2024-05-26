@@ -20,17 +20,16 @@ public class SimplexNoiseRenderer : MonoBehaviour
         GenerateSimplexNoise();
     }
 
-    public void UpdateSimplex(){
-        GenerateSimplexNoise();
-    }
+    //public void UpdateSimplex(){
+    //    GenerateSimplexNoise();
+    //}
 
-    void GenerateSimplexNoise()
+    public void GenerateSimplexNoise()
     {
         CreateTexture();
         int kernelHandle = simplexNoiseComputeShader.FindKernel("CSMain");
         simplexNoiseComputeShader.SetInt("_Resolution", resolution);
         simplexNoiseComputeShader.SetFloat("_Scale", scale);
-        simplexNoiseComputeShader.SetVector("_Offset", offset);
         simplexNoiseComputeShader.SetVector ("_MinMax", minMax);
         simplexNoiseComputeShader.SetTexture(kernelHandle, "Result", simplexRenderTexture);
 

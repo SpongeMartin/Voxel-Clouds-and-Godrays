@@ -33,7 +33,7 @@ public class WorleyNoiseRenderer : MonoBehaviour
         GenerateWorleyNoise();
     }
 
-    void GenerateWorleyNoise()
+    public void GenerateWorleyNoise()
     {
         int kernelHandle = worleyNoiseComputeShader.FindKernel("CSMain");
         worleyNoiseComputeShader.SetInt("_Width", textureWidth);

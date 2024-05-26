@@ -177,8 +177,8 @@ Shader "Unlit/CloudShader"
 
             fixed4 frag (v2f i) : SV_Target
             {
-                /*
-                float debugTileAmount = 1.0;
+                
+                /*float debugTileAmount = 1.0;
                 float viewerSize = 1.0;
                 float width = _ScreenParams.x;
                 float height =_ScreenParams.y;
@@ -193,13 +193,12 @@ Shader "Unlit/CloudShader"
                 //Properties
                 float lightAbsorptionThroughCloud = 1;
 
-                float NumSteps = 100;
                 float3 rayOrigin = _WorldSpaceCameraPos;
                 float viewLength = length(i.viewVector);
                 float3 rayDir = i.viewVector / viewLength;
                 float nonLinearDepth = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture,i.uv);
                 float depth = LinearEyeDepth(nonLinearDepth) * length(i.viewVector);
-                float2 rayBoxInfo = rayBoxDst(_BoundsMin,_BoundsMax,rayOrigin,1/rayDir);
+                float2 rayBoxInfo = rayBoxDst(_BoundsMin,_BoundsMax,rayOrigin,rayDir);
                 float dstToBox = rayBoxInfo.x;
                 float dstInsideBox = rayBoxInfo.y;
                 float dstTravelled = 0;

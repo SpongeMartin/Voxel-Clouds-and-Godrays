@@ -4,7 +4,6 @@
 RWTexture2D<float4> Result;
 int _Resolution;
 float _Scale;
-float2 _Offset;
 float2 _MinMax;
 
 
@@ -403,7 +402,7 @@ float snoise(float4 v)
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
     float amplitude = 1;
-    float frequency = 15;
+    float frequency = _Scale;
 
     float mapValue = 0;
 
@@ -416,5 +415,6 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     }
     
 
-    Result[id.xy] = saturate((mapValue-_MinMax.x)/(_MinMax.y-_MinMax.x));
+    //Result[id.xy] = saturate((mapValue-_MinMax.x)/(_MinMax.y-_MinMax.x));
+    Result[id.xy] = mapValue;
 }
