@@ -12,15 +12,19 @@ public class CloudController : MonoBehaviour
     public float densityMultiplier = 1.0f;
     [Range (0, 1)]
     public float densityThreshold = 1.0f;
-
-    public SimplexNoiseRenderer simplexNoiseRenderer;
-    public WorleyNoiseRenderer worleyNoiseRenderer;
-
     public Vector3 offset = new Vector3(0,0,0);
+    public RenderTexture simp;
 
-    Material material;
+    public Material material;
 
-    private void onRenderImage(RenderTexture src,RenderTexture dest){
+    void Awake(){
+        var weathermap = FindObjectOfType<SimplexNoiseRenderer>();
+        if (Application.isPlaying) {
+            weathermap.UpdateSimplex();
+        }
+    }
+
+    private void OnRenderImage(RenderTexture src,RenderTexture dest){
         if(material == null){
             material = new Material(shader);
         }
@@ -31,10 +35,12 @@ public class CloudController : MonoBehaviour
         material.SetFloat("_DensityThreshold", densityThreshold);
         material.SetFloat("_DensityMultiplier", densityMultiplier);
         material.SetInt("_NumSteps", numSteps);
+        var weathermap = FindObjectOfType<SimplexNoiseRenderer>();
 
-        material.SetTexture("_SimplexNoise", simplexNoiseRenderer.GetRenderTexture());
-        material.SetTexture("_WorleyFBM", worleyNoiseRenderer.GetRenderTexture());
-
+        material.SetTexture("_SimplexNoise", weathermap.simplexRenderTexture);
+        simp = weathermap.simplexRenderTexture;
+        var noise = FindObjectOfType<WorleyNoiseRenderer>();
+        material.SetTexture("_WorleyFBM", noise.worleyRenderTexture);
         Graphics.Blit(src,dest,material);
     }
 

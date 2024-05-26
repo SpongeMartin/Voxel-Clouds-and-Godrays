@@ -20,15 +20,15 @@ public class WorleyNoiseRenderer : MonoBehaviour
     private float prevMedFreq;
     private float prevHighFreq;
     private float prevPerlinWorleyFreq;
-
-    private RenderTexture renderTexture;
+    [SerializeField]
+    public RenderTexture worleyRenderTexture;
 
     void Start()
     {
-        renderTexture = new RenderTexture(textureWidth, textureHeight, 0, RenderTextureFormat.ARGBFloat);
-        renderTexture.volumeDepth = textureDepth;
-        renderTexture.enableRandomWrite = true;
-        renderTexture.dimension = UnityEngine.Rendering.TextureDimension.Tex3D;
+        worleyRenderTexture = new RenderTexture(textureWidth, textureHeight, 0, RenderTextureFormat.ARGBFloat);
+        worleyRenderTexture.volumeDepth = textureDepth;
+        worleyRenderTexture.enableRandomWrite = true;
+        worleyRenderTexture.dimension = UnityEngine.Rendering.TextureDimension.Tex3D;
 
         GenerateWorleyNoise();
     }
@@ -45,7 +45,7 @@ public class WorleyNoiseRenderer : MonoBehaviour
         worleyNoiseComputeShader.SetFloat("_HighFreq",hfreq);
         worleyNoiseComputeShader.SetFloat("_PerlinWorleyFreq",pwfreq);
 
-        worleyNoiseComputeShader.SetTexture(kernelHandle, "Result", renderTexture);
+        worleyNoiseComputeShader.SetTexture(kernelHandle, "Result", worleyRenderTexture);
 
         int threadGroupsX = Mathf.CeilToInt(textureWidth / 8.0f);
         int threadGroupsY = Mathf.CeilToInt(textureHeight / 8.0f);
@@ -59,8 +59,8 @@ public class WorleyNoiseRenderer : MonoBehaviour
         {
             GenerateWorleyNoise();
         }
-        displayMaterial.SetTexture("_MainTex", renderTexture);
-        displayMaterial.SetFloat("_Scale", scale);
+        //displayMaterial.SetTexture("_MainTex", renderTexture);
+        //displayMaterial.SetFloat("_Scale", scale);
     }
 
     private bool ParametersChanged()
@@ -83,13 +83,10 @@ public class WorleyNoiseRenderer : MonoBehaviour
 
     void OnDestroy()
     {
-        if (renderTexture != null)
+        if (worleyRenderTexture != null)
         {
-            renderTexture.Release();
-            Destroy(renderTexture);
+            worleyRenderTexture.Release();
+            Destroy(worleyRenderTexture);
         }
-    }
-    public RenderTexture GetRenderTexture(){
-        return renderTexture;
     }
 }

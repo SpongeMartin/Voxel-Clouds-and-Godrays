@@ -149,6 +149,6 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     // Combine them to create FBM
     float fbm = float4(perlinWorleyNoise, lowFreqWorley, medFreqWorley, highFreqWorley);
     float samples = lowFreqSample(fbm);
-    //Result[id.xyz] = float4(perlinWorleyNoise, lowFreqWorley, medFreqWorley, highFreqWorley);
-    Result[id.xyz] = float4(samples, samples, samples, samples);
+    Result[id.xyz] = 1 - float4(perlinWorleyNoise, lowFreqWorley, medFreqWorley, highFreqWorley);
+    //Result[id.xyz] = float4(samples, samples, samples, samples);
 }

@@ -69,6 +69,11 @@ Shader "Unlit/Clouds"
                 return o;
             }
 
+            float hg(float a, float g) {
+                float g2 = g*g;
+                return (1-g2) / (4*3.1415*pow(1+g2-2*g*(a), 1.5));
+            }
+
             float4 BlendUnder(float4 color, float4 newColor)
             {
                 color.rgb += (1.0 - color.a) * newColor.a * newColor.rgb;
@@ -111,7 +116,7 @@ Shader "Unlit/Clouds"
                     float3 sampledDensity = (_PerlinTex.SampleLevel(linear_repeat_sampler, uvw, 0).r);
                     density += sampledDensity * _DensityScale;
                 }
-                float4 result = float4(exp(-density),0,0,0.5);
+                float4 result = float4(exp(-density),0,0,0.5); 
                 return result;
                 //return float4(density,density,density,density);
 
