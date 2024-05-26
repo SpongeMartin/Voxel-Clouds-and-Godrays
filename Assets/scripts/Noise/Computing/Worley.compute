@@ -140,13 +140,11 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
     float3 uv = float3(id.x, id.y, id.z) / float3(_Width, _Height, _Depth) * _Scale;
 
-    // Generate different types of Worley noise
     float lowFreqWorley = worley(uv, _LowFreq);
     float medFreqWorley = worley(uv, _MedFreq);
     float highFreqWorley = worley(uv, _HighFreq);
     float perlinWorleyNoise = perlinWorley(uv, _PerlinWorleyFreq);
 
-    // Combine them to create FBM
     float fbm = float4(perlinWorleyNoise, lowFreqWorley, medFreqWorley, highFreqWorley);
     float samples = lowFreqSample(fbm);
     Result[id.xyz] = 1 - float4(perlinWorleyNoise, lowFreqWorley, medFreqWorley, highFreqWorley);
