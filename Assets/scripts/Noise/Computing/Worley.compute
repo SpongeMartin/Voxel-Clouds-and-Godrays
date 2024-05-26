@@ -1,0 +1,154 @@
+#pragma kernel CSMain
+
+RWTexture3D<float4> Result;
+int _Width;
+int _Height;
+int _Depth;
+float _Scale;
+float _LowFreq;
+float _MedFreq;
+float _HighFreq;
+float _PerlinWorleyFreq;
+
+float rand(float3 n)
+{
+    return frac(sin(dot(n, float3(12.9898, 78.233, 37.719))) * 43758.5453123);
+}
+
+float3 random3(float3 st)
+{
+    st = float3(dot(st, float3(127.1, 311.7, 74.3)), dot(st, float3(269.5, 183.3, 246.1)), dot(st, float3(113.5, 271.9, 29.1)));
+    return frac(sin(st) * 43758.5453123);
+}
+
+float worley(float3 uv, float frequency)
+{
+    float3 scaledUV = uv * frequency;
+    float3 i = floor(scaledUV);
+    float3 f = frac(scaledUV);
+
+    float md = 1.0;
+    for (int z = -1; z <= 1; z++)
+    {
+        for (int y = -1; y <= 1; y++)
+        {
+            for (int x = -1; x <= 1; x++)
+            {
+                float3 g = float3(x, y, z);
+                float3 o = random3(i + g);
+                float3 r = g + o - f;
+                float d = dot(r, r);
+                md = min(md, d);
+            }
+        }
+    }
+
+    return sqrt(md);
+}
+
+// Permutation table for gradient calculation
+static const int perm[256] = {151, 160, 137, 91, 90, 15, 131, 13,
+ 201, 95, 96, 53, 194, 233, 7, 225, 140, 36, 103, 30, 69, 142,
+ 8, 99, 37, 240, 21, 10, 23, 190, 6, 148, 247, 120, 234, 75,
+ 0, 26, 197, 62, 94, 252, 219, 203, 117, 35, 11, 32, 57, 177,
+ 33, 88, 237, 149, 56, 87, 174, 20, 125, 136, 171, 168, 68,
+ 175, 74, 165, 71, 134, 139, 48, 27, 166, 77, 146, 158, 231,
+ 83, 111, 229, 122, 60, 211, 133, 230, 220, 105, 92, 41, 55, 
+ 46, 245, 40, 244, 102, 143, 54, 65, 25, 63, 161, 1, 216, 80, 
+ 73, 209, 76, 132, 187, 208, 89, 18, 169, 200, 196, 135, 130, 
+ 116, 188, 159, 86, 164, 100, 109, 198, 173, 186, 3, 64, 52, 
+ 217, 226, 250, 124, 123, 5, 202, 38, 147, 118, 126, 255, 82, 
+ 85, 212, 207, 206, 59, 227, 47, 16, 58, 17, 182, 189, 28, 42, 
+ 223, 183, 170, 213, 119, 248, 152, 2, 44, 154, 163, 70, 221, 
+ 153, 101, 155, 167, 43, 172, 9, 129, 22, 39, 253, 19, 98, 108, 
+ 110, 79, 113, 224, 232, 178, 185, 112, 104, 218, 246, 97, 228, 
+ 251, 34, 242, 193, 238, 210, 144, 12, 191, 179, 162, 241, 81, 
+ 51, 145, 235, 249, 14, 239, 107, 49, 192, 214, 31, 181, 199, 
+ 106, 157, 184, 84, 204, 176, 115, 121, 50, 45, 127, 4, 150, 
+ 254, 138, 236, 205, 93, 222, 114, 67, 29, 24, 72, 243, 141, 
+ 128, 195, 78, 66, 215, 61, 156, 180};
+
+
+// Gradient function to compute dot product between gradient vector and distance vector
+float grad(int hash, float x, float y, float z) {
+    int h = hash & 15;
+    float u = h < 8 ? x : y;
+    float v = h < 4 ? y : (h == 12 || h == 14 ? x : z);
+    return ((h & 1) == 0 ? u : -u) + ((h & 2) == 0 ? v : -v);
+}
+
+// Fade function to smooth the interpolation
+float fade(float t) {
+    return t * t * t * (t * (t * 6 - 15) + 10);
+}
+
+// Linear interpolation function
+float lerp(float t, float a, float b) {
+    return a + t * (b - a);
+}
+
+// Perlin noise function for 3D
+float perlin(float3 p) {
+    int3 P = floor(p);
+    float3 f = frac(p);
+
+    float u = fade(f.x);
+    float v = fade(f.y);
+    float w = fade(f.z);
+
+    int A = perm[P.x] + P.y;
+    int AA = perm[A] + P.z;
+    int AB = perm[A + 1] + P.z;
+    int B = perm[P.x + 1] + P.y;
+    int BA = perm[B] + P.z;
+    int BB = perm[B + 1] + P.z;
+
+    return lerp(w, lerp(v, lerp(u, grad(perm[AA], f.x, f.y, f.z), 
+                                 grad(perm[BA], f.x - 1, f.y, f.z)),
+                         lerp(u, grad(perm[AB], f.x, f.y - 1, f.z), 
+                                 grad(perm[BB], f.x - 1, f.y - 1, f.z))),
+                     lerp(v, lerp(u, grad(perm[AA + 1], f.x, f.y, f.z - 1), 
+                                 grad(perm[BA + 1], f.x - 1, f.y, f.z - 1)),
+                         lerp(u, grad(perm[AB + 1], f.x, f.y - 1, f.z - 1), 
+                                 grad(perm[BB + 1], f.x - 1, f.y - 1, f.z - 1))));
+}
+
+
+float perlinWorley(float3 uv, float frequency)
+{
+    return (worley(uv, frequency) + perlin(uv * frequency)) * 0.5;
+}
+
+float ReMap(float value , float old_low , float old_high , float new_low ,float new_high){
+    float ret_val = new_low + ( value - old_low ) * ( new_high - new_low ) / ( old_high - old_low );
+    return ret_val ;
+}
+
+float lowFreqSample(float4 shape_sample){
+    float shape_noise = shape_sample.g * 0.625 + shape_sample.b * 0.25 + shape_sample.a * 0.125;
+    shape_noise = - (1 - shape_noise);
+    shape_noise = ReMap(shape_sample.r , shape_noise,1.0 ,0.0 ,1.0);
+    return shape_noise;
+}
+
+
+[numthreads(8, 8, 8)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= _Width || id.y >= _Height || id.z >= _Depth)
+        return;
+
+    float3 uv = float3(id.x, id.y, id.z) / float3(_Width, _Height, _Depth) * _Scale;
+
+    // Generate different types of Worley noise
+    float lowFreqWorley = worley(uv, _LowFreq);
+    float medFreqWorley = worley(uv, _MedFreq);
+    float highFreqWorley = worley(uv, _HighFreq);
+    float perlinWorleyNoise = perlinWorley(uv, _PerlinWorleyFreq);
+
+    // Combine them to create FBM
+    float fbm = float4(perlinWorleyNoise, lowFreqWorley, medFreqWorley, highFreqWorley);
+    float samples = lowFreqSample(fbm);
+    //Result[id.xyz] = float4(perlinWorleyNoise, lowFreqWorley, medFreqWorley, highFreqWorley);
+    Result[id.xyz] = float4(samples, samples, samples, samples);
+}
